@@ -42,7 +42,7 @@ xp,yp = np.meshgrid(xm,ym)
 #%% Time
 t = 0
 t_stop = 10
-CFL = 0.4
+CFL = 0.5
 dt = CFL*dx/u_lid
 n_t = int((t_stop-t)/dt + 1)
 
@@ -339,28 +339,8 @@ while tdx < n_t-1:
     u_n = np.copy(u[tdx,:,:])
     v_n = np.copy(v[tdx,:,:])
     
-    # RK4 Integration
-    u_k1, v_k1, p_k1, div_k1, u_mid_k1, v_mid_k1, vel_mid_k1, vort_k1, u_cl_k1, v_cl_k1  =    step_time(u_n, v_n, Re, St, dx, dy, dt, n, L, u_lid)
-    u_k2, v_k2, p_k2, div_k2, u_mid_k2, v_mid_k2, vel_mid_k2, vort_k2, u_cl_k2, v_cl_k2  =    step_time(u_n+0.5*dt*u_k1, v_n+0.5*dt*v_k1, Re, St, dx, dy, dt, n, L, u_lid)
-    u_k3, v_k3, p_k3, div_k3, u_mid_k3, v_mid_k3, vel_mid_k3, vort_k3, u_cl_k3, v_cl_k3  =    step_time(u_n+0.5*dt*u_k2, v_n+0.5*dt*v_k2, Re, St, dx, dy, dt, n, L, u_lid)
-    u_k4, v_k4, p_k4, div_k4, u_mid_k4, v_mid_k4, vel_mid_k4, vort_k4, u_cl_k4, v_cl_k4  =    step_time(u_n+1.0*dt*u_k3, v_n+1.0*dt*v_k3, Re, St, dx, dy, dt, n, L, u_lid)
+    u_np1, v_np1, p_np1, div_np1, u_mid_np1, v_mid_np1, vel_mid_np1, vort_np1, u_cl_np1, v_cl_np1  =    step_time(u_n, v_n, Re, St, dx, dy, dt, n, L, u_lid)
     
-    # RK4 terms
-    # u_np1 = u_n + (1/6)*(u_k1 + 2*u_k2 + 2*u_k3 + u_k4)*dt
-    # v_np1 = v_n + (1/6)*(v_k1 + 2*v_k2 + 2*v_k3 + v_k4)*dt
-    
-    # Explicit Euler terms (Upgrade such that the functions which obtain these parameters are outside of time integration)
-    u_np1 = u_k1
-    v_np1 = v_k1
-    p_np1 = p_k1
-    div_np1 = div_k1
-    u_mid_np1 = u_mid_k1
-    v_mid_np1 = v_mid_k1
-    vel_mid_np1 = vel_mid_k1
-    vort_np1 = vort_k1
-    u_cl_np1 = u_cl_k1
-    v_cl_np1 = v_cl_k1
-        
     u[tdx+1,:,:]=np.copy(u_np1) 
     v[tdx+1,:,:]=np.copy(v_np1)
     p[tdx+1,:,:]=np.copy(p_np1)
