@@ -1,114 +1,138 @@
-# Comment to facilitate push to restore working
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-#%% Constants
-Re = 400.
-St = 1.
-u_lid = 1.
+#%% INPUTS
 
-# Physical parameters
-u_phys = 1.0 #[m/s]
-rho_phys = 1000 #[kg/m3]
-mu_phys = 0.00089 #[Pa-s]
+# Non-dimensional constants
+Re = 100. # Reynolds number
+St = 1. # Strouhal number
+u_lid = 1. # Lid velocity
 
-L_phys = Re*mu_phys/u_phys
-t_phys = L_phys/(u_phys*St)
+# Fluid properties
+u_phys = 1.0 # [m/s], velocity
+rho_phys = 1000 # [kg/m3], density
+mu_phys = 0.00089 # [Pa-s], dynamic viscosity
 
-#%% Domain
-n = 32 # Even number
+# Spatial domain
+n = 32 # Number of grid points (even number)
+
+# Temporal domain
+t_stop = 10 # Stop time
+CFL = 0.5 # CFL number
+
+#%% PRE-SIMULATION CALCULATIONS
+
+L_phys = Re*mu_phys/u_phys # [m], length scale
+t_phys = L_phys/(u_phys*St) # [s], time scale
+
+#%% SPATIAL DOMAIN
+
+# Center node index
 idx_m = int(n/2-1)
 
+# Domain lengths
 Length_x = 1
 Length_y = 1
 
-x = np.linspace(0,Length_x,n+1)
-y = np.linspace(0,Length_y,n+1)
+# Cell wall coordinates
+x = np.linspace(0, Length_x, n+1)
+y = np.linspace(0, Length_y, n+1)
 
+# Grid spacing
 dx = x[1]-x[0]
 dy = y[1]-y[0]
 
-xm = np.linspace(dx/2,Length_x-dx/2,n) # midvalues
-ym = np.linspace(dy/2,Length_y-dy/2,n) # midvalues
+# Cell center coordinates
+xm = np.linspace(dx/2, Length_x-dx/2, n) # midvalues
+ym = np.linspace(dy/2, Length_y-dy/2, n) # midvalues
 
-xo = np.linspace(-dx/2,Length_x+dx/2,n) # including ghost
+# Cell center coordinates (with ghost nodes)
+xo = np.linspace(-dx/2, Length_x+dx/2, n) # including ghost
 yo = np.linspace(-dx/2,Length_y+dy/2,) # including ghost
 
-xu,yu = np.meshgrid(x,ym)
-xv,yv = np.meshgrid(xm,y)
-xp,yp = np.meshgrid(xm,ym)
+# Construct meshes
+xu, yu = np.meshgrid(x, ym) # x-velocity nodes
+xv, yv = np.meshgrid(xm, y) # y-velocity nodes
+xp, yp = np.meshgrid(xm, ym) # pressure nodes
 
-#%% Time
+#%% TEMPORAL DOMAIN
+
+# Initialize time
 t = 0
-t_stop = 10
-CFL = 0.5
+
+# Time step, number of iterations
 dt = CFL*dx/u_lid
 n_t = int((t_stop-t)/dt + 1)
 
-n_p_iter = 1
-
-#%% Initialize
+#%% INITIALIZE VARIABLES
 
 # u resides on x and ym
 # v resides on xm and y
 # p resides on xm and ym
 
-u = np.zeros((n_t,n+2,n+1)) # including ghost nodes
-v = np.zeros((n_t,n+1,n+2)) # including ghost nodes
-p = np.zeros((n_t,n,n)) # no ghost nodes
-div = np.zeros((n_t,n,n)) # no ghost nodes
-u_mid = np.zeros((n_t,n,n)) # no ghost nodes
-v_mid = np.zeros((n_t,n,n)) # no ghost nodes
-vel_mid = np.zeros((n_t,n,n)) # no ghost nodes 
-vort = np.zeros((n_t,n,n)) # no ghost nodes 
-u_cl = np.zeros((n_t,n)) # no ghost nodes 
-v_cl = np.zeros((n_t,n)) # no ghost nodes 
+u = np.zeros((n_t, n+2, n+1)) # x-velocity, including ghost nodes
+v = np.zeros((n_t, n+1, n+2)) # y-velocity, including ghost nodes
+p = np.zeros((n_t, n, n)) # pressure, no ghost nodes
+div = np.zeros((n_t, n, n)) # divergence of velocity, no ghost nodes
+u_mid = np.zeros((n_t, n, n)) # x-velocity on pressure grid, no ghost nodes
+v_mid = np.zeros((n_t, n, n)) # y-velocity on pressure grid, no ghost nodes
+vel_mid = np.zeros((n_t, n, n)) # magnitude of velocity on pressure grid, no ghost nodes 
+vort = np.zeros((n_t,n,n)) # vorticity, no ghost nodes 
+u_cl = np.zeros((n_t,n)) # x-velocity at centerline, no ghost nodes 
+v_cl = np.zeros((n_t,n)) # y-velocity at centerline, no ghost nodes 
+
 #%% Assemble Poisson solver
 
+# Diagonal indices
 idxs_diag = np.diag_indices(n)
-idxs_diag_p1 = (idxs_diag[0],idxs_diag[1]+1)
-idxs_diag_m1 = (idxs_diag[0],idxs_diag[1]-1)
 
-I_x = np.zeros((n,n))
+# Off-diagonal indices
+idxs_diag_p1 = (idxs_diag[0], idxs_diag[1]+1)
+idxs_diag_m1 = (idxs_diag[0], idxs_diag[1]-1)
+
+# Identity matrix, x
+I_x = np.zeros((n, n))
 I_x[idxs_diag] = 1
 
-I_y = np.zeros((n,n))
+# Identity matrix, y
+I_y = np.zeros((n, n))
 I_y[idxs_diag] = 1
 
-L_x = np.zeros((n,n))
-L_x[idxs_diag_m1[0][1:n],idxs_diag_m1[1][1:n]] = -1
+
+L_x = np.zeros((n, n))
+L_x[idxs_diag_m1[0][1:n], idxs_diag_m1[1][1:n]] = -1
 L_x[idxs_diag] = 2
-L_x[idxs_diag_p1[0][0:n-1],idxs_diag_p1[1][0:n-1]] = -1
-L_x[0,0] = 1
-L_x[0,1] = -1
-L_x[-1,-1] = 1
-L_x[-1,-2] = -1
+L_x[idxs_diag_p1[0][0:n-1], idxs_diag_p1[1][0:n-1]] = -1
+L_x[0, 0] = 1
+L_x[0, 1] = -1
+L_x[-1, -1] = 1
+L_x[-1, -2] = -1
 
 
-S_x = np.zeros((n,n))
-S_y = np.zeros((n,n))
-lambda_x = np.zeros((n,n))
-lambda_y = np.zeros((n,n))
-for mdx in range(0,n):
-    for jdx in range(0,n):
-        S_x[jdx,mdx]= np.cos(xm[jdx]*np.pi*mdx)
-        S_y[jdx,mdx]= np.cos(ym[jdx]*np.pi*mdx)
-        lambda_x[jdx,mdx] = (1/dx**2)*(2-2*np.cos(mdx*np.pi*dx))
-        lambda_y[mdx,jdx] = (1/dy**2)*(2-2*np.cos(mdx*np.pi*dy))
+S_x = np.zeros((n, n))
+S_y = np.zeros((n, n))
+lambda_x = np.zeros((n, n))
+lambda_y = np.zeros((n, n))
+for mdx in range(0, n):
+    for jdx in range(0, n):
+        S_x[jdx, mdx]= np.cos(xm[jdx]*np.pi*mdx)
+        S_y[jdx, mdx]= np.cos(ym[jdx]*np.pi*mdx)
+        lambda_x[jdx, mdx] = (1/dx**2)*(2-2*np.cos(mdx*np.pi*dx))
+        lambda_y[mdx, jdx] = (1/dy**2)*(2-2*np.cos(mdx*np.pi*dy))
 lam = lambda_y + lambda_x
 iS_x = np.linalg.inv(S_x)
 iS_y = np.linalg.inv(S_y)
 
 
-L_y = np.zeros((n,n))
+L_y = np.zeros((n, n))
 L_y[idxs_diag_m1[0][1:n],idxs_diag_m1[1][1:n]] = -1
 L_y[idxs_diag] = 2
 L_y[idxs_diag_p1[0][0:n-1],idxs_diag_p1[1][0:n-1]] = -1
-L_y[0,0] = 1
-L_y[0,1] = -1
-L_y[-1,-1] = 1
-L_y[-1,-2] = -1
+L_y[0, 0] = 1
+L_y[0, 1] = -1
+L_y[-1, -1] = 1
+L_y[-1, -2] = -1
 
 L = np.kron((1/dx**2)*L_x,I_y) + np.kron(I_x,(1/dy**2)*L_y)
 # L[0,:] = 0.
@@ -143,27 +167,26 @@ def U_MOM_PREDICTOR(U, V, RE, ST, DX, DY, DT, IDX, JDX):
     DUDY_s = (-U[JDX-1,IDX]+U[JDX,IDX])/DY
     DUDY_n = (-U[JDX,IDX]+U[JDX+1,IDX])/DY
     
-    # # Convective fluxes 
-    # F_U_c_w = -U_w*U_w*DY
-    # F_U_c_e =  U_e*U_e*DY
-    # F_U_c_s = -U_s*V_s*DX
-    # F_U_c_n =  U_n*V_n*DX
-    # F_U_c = F_U_c_w + F_U_c_e + F_U_c_s + F_U_c_n
+    # Convective fluxes 
+    F_U_c_w = -U_w*U_w*DY
+    F_U_c_e =  U_e*U_e*DY
+    F_U_c_s = -U_s*V_s*DX
+    F_U_c_n =  U_n*V_n*DX
+    F_U_c = F_U_c_w + F_U_c_e + F_U_c_s + F_U_c_n
     
-    # # Diffusive fluxes (FOR WHATEVER REASON, IT WORKS TO DO THE MOM. EQN. IN ONE STEP)
-    # F_U_d_w = -(1/RE)*DUDX_w*DY
-    # F_U_d_e =  (1/RE)*DUDX_e*DY 
-    # F_U_d_s = -(1/RE)*DUDY_s*DX
-    # F_U_d_n =  (1/RE)*DUDY_n*DX
-    # F_U_d = F_U_d_w + F_U_d_e + F_U_d_s + F_U_d_n
+    # Diffusive fluxes
+    F_U_d_w = -(1/RE)*DUDX_w*DY
+    F_U_d_e =  (1/RE)*DUDX_e*DY 
+    F_U_d_s = -(1/RE)*DUDY_s*DX
+    F_U_d_n =  (1/RE)*DUDY_n*DX
+    F_U_d = F_U_d_w + F_U_d_e + F_U_d_s + F_U_d_n
 
     # Unsteady term
     A_U = ST*(1/DT)*DX*DY
     
     # Update u
-    # U_star = (-F_U_c + F_U_d)/A_U + U[JDX,IDX]
-    U_star = U[JDX,IDX] + (1/A_U) * ( -(U_e*U_e*DY - U_w*U_w*DY + U_n*V_n*DX - U_s*V_s*DX) + (1/RE)*(-DUDX_w*DY + DUDX_e*DY -DUDY_s*DX + DUDY_n*DX) )
-    
+    U_star = (-F_U_c + F_U_d)/A_U + U[JDX,IDX]
+        
     return U_star
 
 def V_MOM_PREDICTOR(U, V, RE, ST, DX, DY, DT, IDX, JDX):
@@ -187,26 +210,25 @@ def V_MOM_PREDICTOR(U, V, RE, ST, DX, DY, DT, IDX, JDX):
     DVDY_s = (-V[JDX-1,IDX]+V[JDX,IDX])/DY
     DVDY_n = (-V[JDX,IDX]+V[JDX+1,IDX])/DY
     
-    # # Convective fluxes
-    # F_V_c_w = -U_w*V_w*DY
-    # F_V_c_e =  U_e*V_e*DY
-    # F_V_c_s = -V_s*V_s*DX
-    # F_V_c_n =  V_n*V_n*DX
-    # F_V_c = F_V_c_w + F_V_c_e + F_V_c_s + F_V_c_n
+    # Convective fluxes
+    F_V_c_w = -U_w*V_w*DY
+    F_V_c_e =  U_e*V_e*DY
+    F_V_c_s = -V_s*V_s*DX
+    F_V_c_n =  V_n*V_n*DX
+    F_V_c = F_V_c_w + F_V_c_e + F_V_c_s + F_V_c_n
     
-    # # Diffusive fluxes (FOR WHATEVER REASON, IT WORKS TO DO THE MOM. EQN. IN ONE STEP)
-    # F_V_d_w = -(1/RE)*DVDX_w*DY
-    # F_V_d_e =  (1/RE)*DVDX_e*DY
-    # F_V_d_s = -(1/RE)*DVDY_s*DX
-    # F_V_d_n =  (1/RE)*DVDY_n*DX
-    # F_V_d = F_V_d_w + F_V_d_e + F_V_d_s + F_V_d_n
+    # Diffusive fluxes (FOR WHATEVER REASON, IT WORKS TO DO THE MOM. EQN. IN ONE STEP)
+    F_V_d_w = -(1/RE)*DVDX_w*DY
+    F_V_d_e =  (1/RE)*DVDX_e*DY
+    F_V_d_s = -(1/RE)*DVDY_s*DX
+    F_V_d_n =  (1/RE)*DVDY_n*DX
+    F_V_d = F_V_d_w + F_V_d_e + F_V_d_s + F_V_d_n
 
     # Unsteady term
     A_V = ST*(1/DT)*DX*DY
     
-    # Update v
-    # V_star = (-F_V_c + F_V_d)/A_V + V[IDX,JDX]
-    V_star = V[JDX,IDX] + (1/A_V) * ( -(-V_s*V_s*DX + V_n*V_n*DX - U_w*V_w*DX + U_e*V_e*DX) + (1/RE)*(-DVDX_w*DY + DVDX_e*DY -DVDY_s*DX + DVDY_n*DX) )
+    # Update v   
+    V_star = (-F_V_c + F_V_d)/A_V + V[JDX,IDX]
     
     return V_star
 
