@@ -1,0 +1,15 @@
+[0] Config.pm:307> INFO - This is Biber 2.19
+[0] Config.pm:310> INFO - Logfile is 'LDCV_UiNS2DFV.blg'
+[111] biber:340> INFO - === Sat Mar 29, 2025, 21:11:18
+[131] Biber.pm:419> INFO - Reading 'LDCV_UiNS2DFV.bcf'
+[211] Biber.pm:979> INFO - Found 1 citekeys in bib section 0
+[228] Biber.pm:4419> INFO - Processing section 0
+[241] Biber.pm:4610> INFO - Looking for bibtex file 'bib/refs_LDCV.bib' for section 0
+[242] bibtex.pm:1713> INFO - LaTeX decoding ...
+[245] bibtex.pm:1519> INFO - Found BibTeX data source 'bib/refs_LDCV.bib'
+[297] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[297] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[297] Biber.pm:4239> INFO - Sorting list 'none/global//global/global' of type 'entry' with template 'none' and locale 'en-US'
+[297] Biber.pm:4245> INFO - No sort tailoring available for locale 'en-US'
+[299] bbl.pm:660> INFO - Writing 'LDCV_UiNS2DFV.bbl' with encoding 'UTF-8'
+[300] bbl.pm:763> INFO - Output to LDCV_UiNS2DFV.bbl

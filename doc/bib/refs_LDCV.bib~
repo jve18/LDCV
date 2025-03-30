@@ -1,0 +1,87 @@
+@article{Evans_JPP_2023a_PerfSFRJBypassAir,
+author = {Evans, Jay V. and Senior, William C. B. and Gejji, Rohan M. and Slabaugh, Carson D.},
+title = {Performance of a Solid-Fuel Ramjet Combustor with Bypass Air Addition},
+journal = {Journal of Propulsion and Power},
+volume = {39},
+number = {2},
+pages = {167-175},
+year = {2023},
+doi = {10.2514/1.B38788},
+keywords = {journal}
+}
+
+@article{Evans_JPP_2023b_UTXrayCompare,
+author = {Evans, Jay V. and Reid, Brandon T. and Gejji, Rohan M. and Slabaugh, Carson D.},
+title = {Solid-Fuel Ramjet Regression Rate Measurements Using X-Ray Radiography and Ultrasonic Transducers},
+journal = {Journal of Propulsion and Power},
+volume = {39},
+number = {6},
+pages = {905-919},
+year = {2023},
+doi = {10.2514/1.B39210},
+keywords = {journal}
+}
+
+@inproceedings{Evans_JPC_2020_ResearchScaleSFRJ_CORRECTION,
+author = {Jay V. Evans and William C. B. Senior and Rohan Gejji and Carson D. Slabaugh},
+booktitle = {AIAA Propulsion and Energy 2020 Forum},
+doi = {10.2514/6.2020-3897.c1},
+publisher = {AIAA 2020-3897},
+title = {Correction: Experimental Characterization of a Solid-Fuel Ramjet Combustor at Flight-Relevant Conditions},
+year = {2020},
+keywords = {conference}
+}
+
+@inproceedings{Evans_JPC_2020_ResearchScaleSFRJ,
+author = {Jay V. Evans and William C. B. Senior and Rohan Gejji and Carson D. Slabaugh},
+booktitle = {AIAA Propulsion and Energy 2020 Forum},
+doi = {10.2514/6.2020-3897},
+publisher = {AIAA 2020-3897},
+title = {Experimental Characterization of a Solid-Fuel Ramjet Combustor at Flight-Relevant Conditions},
+year = {2020},
+keywords = {conference}
+}
+
+@inproceedings{Evans_ST_2021_SFRJwBP,
+author = {Jay V. Evans and Will C. B. Senior and Rohan Gejji and Nicholas L. Strahan and Carson D. Slabaugh},
+booktitle = {AIAA Scitech 2021 Forum},
+doi = {10.2514/6.2021-1876},
+publisher = {AIAA 2021-1876},
+title = {Performance of an SFRJ with an Aft Mixing Section Utilizing Bypass Air},
+year = {2021},
+keywords = {conference}
+}
+
+@inproceedings{Senior_ST_2021_OpticAccessSFRJ,
+author = {Will C. B. Senior and Jay V. Evans and Rohan Gejji and Carson D. Slabaugh},
+booktitle = {AIAA Scitech 2021 Forum},
+doi = {doi.org/10.2514/6.2021-1019},
+publisher = {AIAA 2021-1019},
+title = {Development and Investigation of an Optically Accessible Solid Fuel Ramjet Combustor},
+year = {2021},
+keywords = {conference}
+}
+
+@phdthesis{Evans_PhD_Diss_2023,
+  title        = {Experimental Measurement and Modeling of Regression Rate Phenomena in Solid Fuel Ramjet Combustors},
+  author       = {Jay V. Evans},
+  year         = {2023},
+  month        = {12},
+  address      = {West Lafayette, IN},
+  doi          = {https://doi.org/10.25394/PGS.24731076.v1},
+  school       = {Purdue University},
+  type         = {PhD thesis},
+  keywords     = {thesis}
+}
+
+@mastersthesis{Evans_MS_Thesis_2021,
+  title        = {Characterization of the Secondary Combustion Zone of a Solid Fuel Ramjet},
+  author       = {Jay V. Evans},
+  year         = {2021},
+  month        = {8},
+  address      = {West Lafayette, IN},
+  doi          = {https://doi.org/10.25394/PGS.14842800.v1},
+  school       = {Purdue University},
+  type         = {Master's thesis},
+  keywords     = {thesis}
+}

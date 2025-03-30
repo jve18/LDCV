@@ -1,0 +1,22 @@
+% Preamble
+\documentclass[10pt, letterpaper]{article}
+%\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+
+% Packages - bibliography management
+\usepackage[backend=biber,style=nature]{biblatex}
+\addbibresource{../bib/refs_LDCV.bib}
+%\DeclareFieldFormat{labelnumberwidth}{}
+%\setlength{\biblabelsep}{0pt}
+
+% Header
+\title{Lid-Driven Cavity Flow: A Finite-Volume Implementation}
+\date{}
+\author{Jay V. Evans}
+
+% Document
+\begin{document}
+  \maketitle
+\end{document}
+
+
