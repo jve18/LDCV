@@ -98,6 +98,18 @@ As a result of the nondimensionalization, the dimensionless numbers, $\text{Re}$
 
 \subsection{Integral Equations}
 
+The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndim}) is required to apply a finite volume method numerical solution. The integral form of the non-dimensional momentum equation is obtained by integrating the differential form of the equation over a volume domain, $\Omega$, which yields Eq. \ref{eq:mom_ndim_int_0}. Gauss's Divergence Theorem is applied to Eq. \ref{eq:mom_ndim_int_0} to transform the volume integrals over a volume domain $\Omega$ into surface integrals over a surface boundary $\sigma$. Furthermore, the constant non-dimensional terms are moved outside of the integrals, producing Eq. \ref{eq:mom_ndim_int}. This integral form of the nondimensional pressure equation, Eq. \ref{eq:mom_ndim_int} is used for solving control volume problem, and thus is intuitive for applying to the uniform two-dimensional cells of this problem. The non-dimensional pressure Poisson equation, Eq. \ref{eq:press_poiss}, is left in differential form. 
+
+\begin{equation}
+  \int_{\Omega}\text{St}\frac{\partial{u_{i}}}{\partial{t}}d\Omega + \int_{\Omega}\frac{\partial(u_{j}u_{i})}{\partial{x_{j}}}d\Omega = \int_{\Omega}\frac{1}{\text{Re}}\frac{\partial^{2}u_{i}}{\partial{x_{j}^{2}}}d\Omega - \int_{\Omega}\frac{\partial{p}}{\partial{x_{i}}}d\Omega
+  \label{eq:mom_ndim_int_0}
+\end{equation}
+
+\begin{equation}
+  \boxed{\text{St}\int_{\Omega}\frac{\partial{u_{i}}}{\partial{t}}d\Omega + \int_{\sigma}{u_{j}u_{i}n_{j}}d\sigma = \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{i}}}{\partial{x_{j}}}n_{j}d\sigma - \int_{\sigma}{pn_{j}}d\sigma}
+  \label{eq:mom_ndim_int}
+\end{equation}
+
 \printbibliography{}
 
 \end{document}
