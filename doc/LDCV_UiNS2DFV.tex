@@ -19,6 +19,15 @@
 \begin{document}
 \maketitle
 
+\section{Problem Description}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[]{img/problem.pdf}
+    \caption{Lid-driven cavity flow problem illustration.}
+    \label{fig:problem}
+\end{figure}
+
 
 \section{Governing Equations}
 
@@ -109,6 +118,10 @@ The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndi
   \boxed{\text{St}\int_{\Omega}\frac{\partial{u_{i}}}{\partial{t}}d\Omega + \int_{\sigma}{u_{j}u_{i}n_{j}}d\sigma = \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{i}}}{\partial{x_{j}}}n_{j}d\sigma - \int_{\sigma}{pn_{j}}d\sigma}
   \label{eq:mom_ndim_int}
 \end{equation}
+
+\section{Discretization}
+
+\subsection{Domain and Grid}
 
 \printbibliography{}
 
