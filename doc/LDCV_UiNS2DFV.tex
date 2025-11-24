@@ -104,7 +104,6 @@ As a result of the nondimensionalization, the dimensionless numbers, $\text{Re}$
   \label{eq:press_poiss}
 \end{equation}
 
-
 \subsection{Integral Equations}
 
 The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndim}) is required to apply a finite volume method numerical solution. The integral form of the non-dimensional momentum equation is obtained by integrating the differential form of the equation over a volume domain, $\Omega$, which yields Eq. \ref{eq:mom_ndim_int_0}. Gauss's Divergence Theorem is applied to Eq. \ref{eq:mom_ndim_int_0} to transform the volume integrals over a volume domain $\Omega$ into surface integrals over a surface boundary $\sigma$. Furthermore, the constant non-dimensional terms are moved outside of the integrals, producing Eq. \ref{eq:mom_ndim_int}. This integral form of the nondimensional pressure equation, Eq. \ref{eq:mom_ndim_int} is used for solving control volume problem, and thus is intuitive for applying to the uniform two-dimensional cells of this problem. The non-dimensional pressure Poisson equation, Eq. \ref{eq:press_poiss}, is left in differential form. 
@@ -122,6 +121,46 @@ The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndi
 \section{Discretization}
 
 \subsection{Domain and Grid}
+
+The domain of the problem depicted in Fig. \ref{fig:problem} is described in dimensional and non-dimensional quantities in Eqs. \ref{eq:domain_dim}, \ref{eq:domain_ndim}, respectively. A staggered grid is implemented, such that pressure nodes are placed in the center of the cells ($x_{1} = x_{1,m}$, $x_{2} = x_{2,m}$), $u_{1}$ nodes are placed at the mid-height of the west and east faces of the cells ($x_{1} = x_{1}$, $x_{2} = x_{2,m}$), and $u_{2}$ nodes are placed at the mid-width of the south and north faces of the cells ($x_{1} = x_{1,m}$, $x_{2} = x_{2}$), where the subscript ``$m$`` indicates ``mid-point''. The grid is uniform, as described in Eq. \ref{eq:grid_uniform}. An index ``$i$'' is used for the $x_{1}$ coordinate, and an index ``$j$'' is used for the $x_{2}$ coordinate. The coordinates of the the $u_{1}$, $u_{2}$, and pressure ($p$) nodes are tabulated in Table \ref{tab:grid_coord}, for clarity, and the grid is illustrated in Fig. \ref{fig:grid_hand}. There are ghost-nodes outside of the boundary, in both the $x_{1}$ and $x_{2}$ directions to enforce boundary conditions.
+
+\begin{equation}
+  x_{1}^{*} \in [0, L_{0}^{*}] \\
+  x_{2}^{*} \in [0, L_{0}^{*}] \\
+  \label{eq:domain_dim}
+\end{equation}
+
+\begin{equation}
+  x_{1} \in [0, 1] \\
+  x_{2} \in [0, 1] \\
+  \label{eq:domain_ndim}
+\end{equation}
+
+\begin{equation}
+  \Delta{x} \equiv \Delta{x}_{1} = \Delta{x}_{2}
+  \label{eq:grid_uniform}
+\end{equation}   
+
+\begin{table}
+  \begin{center}
+    \caption{Coordinate locations for different node types.}
+    \begin{tabular}{ | c | c | c | }
+      \hline
+      Node type & $x_{1}$ & $x_{2}$ \\ \hline
+      $u_{1}$ & $i\Delta{x}$ & $j\frac{\Delta{x}}{2}$ \\
+      $u_{2}$ & $i\frac{\Delta{x}}{2}$ & $j\Delta{x}$ \\
+      $p$ & $i\frac{\Delta{x}}{2}$ & $j\frac{\Delta{x}}{2}$ \\ \hline
+    \end{tabular}
+  \end{center}
+  \label{tab:grid_coord}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[]{img/grid_hand_edit.png}
+    \caption{Illustration of staggered velocity-pressure grid.}
+    \label{fig:grid_hand}
+\end{figure}
 
 \printbibliography{}
 
