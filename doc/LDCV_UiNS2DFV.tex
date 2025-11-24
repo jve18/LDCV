@@ -122,7 +122,7 @@ The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndi
 
 \subsection{Domain and Grid}
 
-The domain of the problem depicted in Fig. \ref{fig:problem} is described in dimensional and non-dimensional quantities in Eqs. \ref{eq:domain_dim}, \ref{eq:domain_ndim}, respectively. A staggered grid is implemented, such that pressure nodes are placed in the center of the cells ($x_{1} = x_{1,m}$, $x_{2} = x_{2,m}$), $u_{1}$ nodes are placed at the mid-height of the west and east faces of the cells ($x_{1} = x_{1}$, $x_{2} = x_{2,m}$), and $u_{2}$ nodes are placed at the mid-width of the south and north faces of the cells ($x_{1} = x_{1,m}$, $x_{2} = x_{2}$), where the subscript ``$m$`` indicates ``mid-point''. The grid is uniform, as described in Eq. \ref{eq:grid_uniform}. An index ``$i$'' is used for the $x_{1}$ coordinate, and an index ``$j$'' is used for the $x_{2}$ coordinate. The coordinates of the the $u_{1}$, $u_{2}$, and pressure ($p$) nodes are tabulated in Table \ref{tab:grid_coord}, for clarity, and the grid is illustrated in Fig. \ref{fig:grid_hand}. There are ghost-nodes outside of the boundary, in both the $x_{1}$ and $x_{2}$ directions to enforce boundary conditions.
+The domain of the problem depicted in Fig. \ref{fig:problem} is described in dimensional and non-dimensional quantities in Eqs. \ref{eq:domain_dim}, \ref{eq:domain_ndim}, respectively. A staggered grid is implemented, such that pressure nodes are placed in the center of the cells ($x_{1} = x_{1,M}$, $x_{2} = x_{2,M}$), $u_{1}$ nodes are placed at the mid-height of the west and east faces of the cells ($x_{1} = x_{1}$, $x_{2} = x_{2,M}$), and $u_{2}$ nodes are placed at the mid-width of the south and north faces of the cells ($x_{1} = x_{1,M}$, $x_{2} = x_{2}$), where the subscript ``$M$`` indicates ``mid-point''. The grid is uniform, as described in Eq. \ref{eq:grid_uniform}. An index ``$m$'' is used for the $x_{1}$ coordinate, and an index ``$n$'' is used for the $x_{2}$ coordinate. The coordinates of the the $u_{1}$, $u_{2}$, and pressure ($p$) nodes are tabulated in Table \ref{tab:grid_coord}, for clarity, and the grid is illustrated in Fig. \ref{fig:grid_hand}. There are ghost-nodes outside of the boundary, in both the $x_{1}$ and $x_{2}$ directions to enforce boundary conditions.
 
 \begin{equation}
   x_{1}^{*} \in [0, L_{0}^{*}] \\
@@ -147,9 +147,9 @@ The domain of the problem depicted in Fig. \ref{fig:problem} is described in dim
     \begin{tabular}{ | c | c | c | }
       \hline
       Node type & $x_{1}$ & $x_{2}$ \\ \hline
-      $u_{1}$ & $i\Delta{x}$ & $j\frac{\Delta{x}}{2}$ \\
-      $u_{2}$ & $i\frac{\Delta{x}}{2}$ & $j\Delta{x}$ \\
-      $p$ & $i\frac{\Delta{x}}{2}$ & $j\frac{\Delta{x}}{2}$ \\ \hline
+      $u_{1}$ & $m\Delta{x}$ & $n\frac{\Delta{x}}{2}$ \\
+      $u_{2}$ & $m\frac{\Delta{x}}{2}$ & $n\Delta{x}$ \\
+      $p$ & $m\frac{\Delta{x}}{2}$ & $n\frac{\Delta{x}}{2}$ \\ \hline
     \end{tabular}
   \end{center}
   \label{tab:grid_coord}
@@ -161,6 +161,27 @@ The domain of the problem depicted in Fig. \ref{fig:problem} is described in dim
     \caption{Illustration of staggered velocity-pressure grid.}
     \label{fig:grid_hand}
 \end{figure}
+
+\subsection{Semi-Discrete Momentum Equation: Predictor and Corrector Step}
+
+The momentum equations, given in Eqs. \ref{eq:mom_ndim}, \ref{eq:mom_ndim_int}, cannot be solved in their given form as the pressure field that appears in these equations does not necessarily satisfy continuity. Accordingly, the momentum equation is split into a predictor step equation, Eq. \ref{eq:diff_mom_pred}, and a corrector step equation, Eq. \ref{eq:diff_mom_corr}, by discretizing the equations temporally. Note that ``$k$'' is the time-step index. An intermediate velocity field, $u_{i}^{*}$, is solved for in Eq. \ref{eq:diff_mom_pred} which does not satisfy mass continuity. The pressure Poisson equation, \ref{eq:press_poiss}, is then applied to this velocity field, $u_{i}^{*}$, as shown in Eq. \ref{eq:diff_press_poiss}, such that a pressure field, $p$, is solved for which does satisfy continuity. The corrector equation, \ref{eq:diff_mom_corr}, and a velocity field at time: $k+1$ is obtained which does satisfy mass continuity.
+
+\begin{equation}
+  \text{St}\frac{u_{i}^{*} - u_{i}^{k}}{\Delta{t}} = -\frac{\partial{(u_{j}u_{i})}}{\partial{x_{j}}} + \frac{1}{\text{Re}}\frac{\partial^{2}{u_{i}}}{\partial{x_{j}}}
+  \label{eq:diff_mom_pred}
+\end{equation}
+
+\begin{equation}
+  \text{St}\frac{u_{i}^{k+1} - u_{i}^{*}}{\Delta{t}} =  - \frac{\partial{p}}{\partial{x_{i}}}
+  \label{eq:diff_mom_corr}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial}{\partial{x_{i}}}\bigg(\frac{\partial(u_{j}^{*}u_{i}^{*})}{\partial{x_{j}}}\bigg) = - \frac{\partial}{\partial{x_{i}}}\bigg(\frac{\partial{p}}{\partial{x_{i}}}\bigg)
+  \label{eq:diff_press_poiss}
+\end{equation}
+
+
 
 \printbibliography{}
 
