@@ -343,7 +343,7 @@ The $u_{1}$ predictor equation can now be re-written as shown in Eq. \ref{eq:u1_
   \label{eq:u1_pred_final}
 \end{equation}
 
-The unsteady term in the $u_{1}$ corrector equation is approximated identical to the unsteady term in the $u_{1}$ predictor equations, shown in eq. \ref{u1_mom_us}. The only term on the right hand side of the $u_{1}$ corrector equation is the pressure flux term. Because a staggered grid is used in this problem, the pressure nodes exist at the center of the East and West cell wall faces. The pressure at the center of the cell walls is assumed to be the average pressure evaluated over the wntire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Accordingly, the pressure flux is approximated and discretized as shown in Eqs. \ref{eq:u1_Fp_int} - \ref{eq:u1_Fpw}.
+The unsteady term in the $u_{1}$ corrector equation is approximated identical to the unsteady term in the $u_{1}$ predictor equations, shown in Eq. \ref{eq:u1_mom_us}. The only term on the right hand side of the $u_{1}$ corrector equation is the pressure flux term. Because a staggered grid is used in this problem, the pressure nodes exist at the center of the East and West cell wall faces. The pressure at the center of the cell walls is assumed to be the average pressure evaluated over the wntire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Accordingly, the pressure flux is approximated and discretized as shown in Eqs. \ref{eq:u1_Fp_int} - \ref{eq:u1_Fpw}.
 
 \begin{equation}
   \int_{\sigma}pn_{1}d\sigma = \int_{\sigma_{e}}pd\sigma - \int_{\sigma_{w}}pd\sigma
@@ -539,11 +539,49 @@ The $u_{2}$ corrector momentum equation can now be re-written as shown in Eq. \r
   \label{eq:u2_corr_final}
 \end{equation}
 
+\subsection{Boundary Conditions}
+
+The no-slip velocity boundary conditions, $u_{1} = 0$ (or $U$ at the top wall) and $u_{2}=0$, at the domain boundaries ($x_{1} = 0, L$ and $x_{2} = 0, L$) are enforced through ``ghost nodes'' placed just beyond the domain boundaries. The locations of these ghost nodes are tabulated in Table \ref{tab:ghost} for clarity. A negative velocity is applied at the ghost nodes such that the velocity at the domain boundaries is exactly $0$ (or $U$ at the top wall). This is demonstrated in Eqs. \ref{eq:BC_u1_bot} - \ref{eq:BC_u2_right}. Note that the equation for the velocity applied to the ghost nodes above the top boundary, Eq. \ref{eq:BC_u1_top}, accounts for the non-zero velocity of the lid, $U$. The normal component of velocity is simply set to 0 at the boundaries. These boundary conditions are applied at the beginning of each time step before the predictor, pressure Poisson, and corrector equation procedures are applied.
+
+\begin{table}
+  \begin{center}
+    \caption{Coordinate locations of ghost nodes.}
+    \begin{tabular}{| l | c | c | c | c | }
+      \hline
+      Wall & $x_{1}$ & $x_{2}$ & $n$ & $m$ \\ \hline
+      Left & $-\frac{\Delta{x}}{2}$ & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $0$ & $\in [0, N+1]$ \\
+      Right & $L + \frac{\Delta{x}}{2}$ & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $N+1$ & $\in [0, N+1]$ \\
+      Bottom & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $-\frac{\Delta{x}}{2}$ & $\in [0, N+1]$ & $0$ \\
+      Top & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $L + \frac{\Delta{x}}{2}$ & $\in [0, N+1]$ & $N+1$ \\ \hline
+    \end{tabular}
+  \end{center}
+  \label{tab:ghost}
+\end{table}
+
+\begin{equation}
+  u_{1,(m = 0,n)} = -u_{1,(m = 1, n)}
+  \label{eq:BC_u1_bot}
+\end{equation}
+
+\begin{equation}
+  u_{1,(m = N+1,n)} = 2U-u_{1,(m = N, n)}
+  \label{eq:BC_u1_top}
+\end{equation}
+
+\begin{equation}
+  u_{2,(m,n=0)} = -u_{2,(m, n=1)}
+  \label{eq:BC_u2_left}
+\end{equation}
+
+\begin{equation}
+  u_{2,(m,n=N+1)} = -u_{2,(m, n=N)}
+  \label{eq:BC_u2_right}
+\end{equation}
 
 
-\subsection{Solving the Pressure Poisson Equation}
+\subsection{Pressure Poisson Equation}
 
-\section{Temporal Discretization}
+\subsection{Temporal Discretization}
 
 \section{Solution Procedure}
 
