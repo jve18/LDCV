@@ -104,7 +104,6 @@ As a result of the nondimensionalization, the dimensionless numbers, $\text{Re}$
   \label{eq:press_poiss}
 \end{equation}
 
-
 \subsection{Integral Equations}
 
 The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndim}) is required to apply a finite volume method numerical solution. The integral form of the non-dimensional momentum equation is obtained by integrating the differential form of the equation over a volume domain, $\Omega$, which yields Eq. \ref{eq:mom_ndim_int_0}. Gauss's Divergence Theorem is applied to Eq. \ref{eq:mom_ndim_int_0} to transform the volume integrals over a volume domain $\Omega$ into surface integrals over a surface boundary $\sigma$. Furthermore, the constant non-dimensional terms are moved outside of the integrals, producing Eq. \ref{eq:mom_ndim_int}. This integral form of the nondimensional pressure equation, Eq. \ref{eq:mom_ndim_int} is used for solving control volume problem, and thus is intuitive for applying to the uniform two-dimensional cells of this problem. The non-dimensional pressure Poisson equation, Eq. \ref{eq:press_poiss}, is left in differential form. 
@@ -122,6 +121,471 @@ The integral forms of the non-dimensional momentum equation (Eq. \ref{eq:mom_ndi
 \section{Discretization}
 
 \subsection{Domain and Grid}
+
+The domain of the problem depicted in Fig. \ref{fig:problem} is described in dimensional and non-dimensional quantities in Eqs. \ref{eq:domain_dim}, \ref{eq:domain_ndim}, respectively. A staggered grid is implemented, such that pressure nodes are placed in the center of the cells ($x_{1} = x_{1,M}$, $x_{2} = x_{2,M}$), $u_{1}$ nodes are placed at the mid-height of the west and east faces of the cells ($x_{1} = x_{1}$, $x_{2} = x_{2,M}$), and $u_{2}$ nodes are placed at the mid-width of the south and north faces of the cells ($x_{1} = x_{1,M}$, $x_{2} = x_{2}$), where the subscript ``$M$'' indicates ``mid-point''. The grid is uniform, as described in Eq. \ref{eq:grid_uniform}. An index ``$m$'' is used for the $x_{1}$ coordinate, and an index ``$n$'' is used for the $x_{2}$ coordinate. The coordinates of the the $u_{1}$, $u_{2}$, and pressure ($p$) nodes are tabulated in Table \ref{tab:grid_coord}, for clarity, and the grid is illustrated in Fig. \ref{fig:grid_hand}. There are ghost-nodes outside of the boundary, in both the $x_{1}$ and $x_{2}$ directions to enforce boundary conditions.
+
+\begin{equation}
+  x_{1}^{*} \in [0, L_{0}^{*}] \\
+  x_{2}^{*} \in [0, L_{0}^{*}] \\
+  \label{eq:domain_dim}
+\end{equation}
+
+\begin{equation}
+  x_{1} \in [0, 1] \\
+  x_{2} \in [0, 1] \\
+  \label{eq:domain_ndim}
+\end{equation}
+
+\begin{equation}
+  \Delta{x} \equiv \Delta{x}_{1} = \Delta{x}_{2}
+  \label{eq:grid_uniform}
+\end{equation}   
+
+\begin{table}
+  \begin{center}
+    \caption{Coordinate locations for different node types.}
+    \begin{tabular}{ | c | c | c | }
+      \hline
+      Node type & $x_{1}$ & $x_{2}$ \\ \hline
+      $u_{1}$ & $m\Delta{x}$ & $n\frac{\Delta{x}}{2}$ \\
+      $u_{2}$ & $m\frac{\Delta{x}}{2}$ & $n\Delta{x}$ \\
+      $p$ & $m\frac{\Delta{x}}{2}$ & $n\frac{\Delta{x}}{2}$ \\ \hline
+    \end{tabular}
+  \end{center}
+  \label{tab:grid_coord}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[]{img/grid_hand_edit.png}
+    \caption{Illustration of staggered velocity-pressure grid.}
+    \label{fig:grid_hand}
+\end{figure}
+
+\subsection{Semi-Discrete Momentum Equation: Predictor and Corrector Step}
+
+The momentum equations, given in Eqs. \ref{eq:mom_ndim}, \ref{eq:mom_ndim_int}, cannot be solved in their given form as the pressure field that appears in these equations does not necessarily satisfy continuity. Accordingly, the momentum equation is split into a predictor step equation, Eq. \ref{eq:diff_mom_pred}, and a corrector step equation, Eq. \ref{eq:diff_mom_corr}, by discretizing the equations temporally. Note that ``$k$'' is the time-step index. An intermediate velocity field, $u_{i}^{*}$, is solved for in Eq. \ref{eq:diff_mom_pred} which does not satisfy mass continuity. The pressure Poisson equation, \ref{eq:press_poiss}, is then applied to this velocity field, $u_{i}^{*}$, as shown in Eq. \ref{eq:diff_press_poiss}, such that a pressure field, $p$, is solved for which does satisfy continuity. The corrector equation, \ref{eq:diff_mom_corr}, and a velocity field at time: $k+1$ is obtained which does satisfy mass continuity.
+
+\begin{equation}
+  \text{St}\frac{u_{i}^{*} - u_{i}^{k}}{\Delta{t}} = -\frac{\partial{(u_{j}u_{i})}}{\partial{x_{j}}} + \frac{1}{\text{Re}}\frac{\partial^{2}{u_{i}}}{\partial{x_{j}}}
+  \label{eq:diff_mom_pred}
+\end{equation}
+
+\begin{equation}
+  \text{St}\frac{u_{i}^{k+1} - u_{i}^{*}}{\Delta{t}} =  - \frac{\partial{p}}{\partial{x_{i}}}
+  \label{eq:diff_mom_corr}
+\end{equation}
+
+\begin{equation}
+  \boxed{
+    \frac{\partial}{\partial{x_{i}}}\bigg(\frac{\partial(u_{j}^{*}u_{i}^{*})}{\partial{x_{j}}}\bigg) = - \frac{\partial}{\partial{x_{i}}}\bigg(\frac{\partial{p}}{\partial{x_{i}}}\bigg)
+  }
+  \label{eq:diff_press_poiss}
+\end{equation}
+
+Gauss's theorem is applied to re-cast the differential forms of the predictor step momentum equation, Eq. \ref{eq:diff_mom_pred}, and the corrector step momentum equation, \ref{eq:diff_mom_corr} into integral equations for a finite volume approach, shown in Eqs. \ref{eq:int_mom_pred} and \ref{eq:int_mom_corr}, respectively. In these equations, $n$, is the unit normal vector. The pressure Poisson equation is kept in differential form. Observe that on the right hand sides of Eqs. \ref{eq:int_mom_pred}, \ref{eq:int_mom_corr} a temporal index, $k$, has been assigned which indicates that and \textit{explicit} temporal discretization scheme will be implemented, meaning that the velocity field solution from the $k$ time step will be used to solve for the velocity field at time $k+1$. The pressure field is not assigned a temporal index as it is merely a scalr field variable that is used to enforce mass continuity. 
+
+\begin{equation}
+  \boxed{
+    \text{St}\int_{\Omega}\frac{u_{i}^{*}-u_{i}^{k}}{\Delta{t}}d\Omega = -\int_{\sigma}u_{j}^{k}u_{i}^{k}n_{j}d\sigma + \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{i}^{k}}}{\partial{x_{j}}}n_{j}d\sigma
+  }
+  \label{eq:int_mom_pred}
+\end{equation}
+
+\begin{equation}
+  \boxed{
+    \text{St}\int_{\Omega}\frac{u_{i}^{k+1}-u_{i}^{*}}{\Delta{t}}d\Omega = - \int_{\sigma}pn_{i}d\sigma
+  }
+  \label{eq:int_mom_corr}
+\end{equation}
+
+\subsection{Finite Volume Method and Spatial Discretization}
+
+The integral forms of the predictor momentum equation and corrector momentum equation are discretized in a finite volume method implementation in which the equations are organized into unsteady terms, convective flux, diffusive flux, and pressure flux terms, then numerically approximated as follows.
+
+\subsubsection{$u_{1}$ Momentum Equation}
+
+The predictor and corrector $u_{1}$ momentum equations are obtained by substituting $i = 1$ in the predictor and corrector momentum equations, Eqs. \ref{eq:int_mom_pred}, \ref{eq:int_mom_corr}. The unsteady term in the $u_{1}$ predictor momentum equation is evaluated by assuming that the value of $u_{1}$ at the center of the two-dimensional $u_{1}$ cell is the average value of $u_{1}$ evaluated over the volume of the cell, as shown in Eq. \ref{eq:u1_mom_us}, which is 2nd-order accurate \cite{Ferziger_Springer_2002}.
+
+\begin{equation}
+  \text{St}\int_{\Omega}\frac{u_{1}^{*}-u_{1}^{k}}{\Delta{t}}d\Omega \approx
+  \text{St}\bigg[\frac{u_{1}^{*}-u_{1}^{k}}{\Delta{t}}\bigg]\Delta{x_{1}}\Delta{x_{2}} \equiv
+  A_{u_{1}}[u_{1}^{*} - u_{1}^{k}]
+  \label{eq:u1_mom_us}  
+\end{equation}
+
+The first term on the right hand side of the $u_{1}$ predictor equation represents the convective flux of velocity at the boundaries of the 2D cell, and is is evaluated on the $\sigma_{e}$ (East), $\sigma_{w}$ (West), $\sigma_{n}$ (North), and $\sigma_{s}$ (South) cell interfaces (walls), as shown in Eq. \ref{eq:u1_Fc_int}. These surface integrals are approximated by assuming that the velocities at the centers of the cell walls are the average values of the velocities evaluated over the entire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Convective flux terms, such as $F_{c,e}^{k}$ are defined, and the convective flux integrals are evaluated ash shown in Eqs. \ref{eq:u1_Fce} - \ref{eq:u1_Fcs}. In the two-dimensional $u_{1}$ cells, the velocities are not defined at the centers of the cell faces and thus are obtained by linear interpolation, which has 2nd-order spatial accuracy \cite{Ferziger_Springer_2002}, as shown in Eqs. \ref{eq:u1_u1e} - \ref{eq:u1_u2s}.
+
+\begin{multline}
+  \int_{\sigma}u_{j}^{k}u_{i}^{k}n_{j}d\sigma = 
+  \int_{\sigma}u_{1}^{k}u_{1}^{k}n_{1}d\sigma + \int_{\sigma}u_{2}^{k}u_{1}^{k}n_{2}d\sigma = \\
+  \int_{\sigma_{e}}u_{1}^{k}u_{1}^{k}d\sigma - \int_{\sigma_{w}}u_{1}^{k}u_{1}^{k}d\sigma + \int_{\sigma_{n}}u_{2}^{k}u_{1}^{k}d\sigma - \int_{\sigma_{s}}u_{2}^{k}u_{1}^{k}d\sigma
+  \label{eq:u1_Fc_int}
+\end{multline}
+
+\begin{equation}
+  \int_{\sigma}u_{1}^{k}u_{1}^{k}n_{1}d\sigma \equiv
+  F_{c,e}^{k} \approx u_{1,e}^{k}u_{1,e}^{k}\Delta{x_{2}}
+  \label{eq:u1_Fce}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{w}}u_{1}^{k}u_{1}^{k}d\sigma \equiv
+  F_{c,w}^{k} \approx -u_{1,w}^{k}u_{1,w}^{k}\Delta{x_{2}}
+  \label{eq:u1_Fcw}
+\end{equation}
+
+\begin{equation}
+  \int_{\sigma_{n}}u_{2}^{k}u_{1}^{k}d\sigma \equiv
+  F_{c,n}^{k} \approx u_{2,n}^{k}u_{1,n}^{k}\Delta{x_{1}}
+  \label{eq:u1_Fcn}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{s}}u_{2}^{k}u_{1}^{k}d\sigma \equiv
+  F_{c,s}^{k} \approx -u_{2,s}^{k}u_{1,s}^{k}\Delta{x_{1}}
+  \label{eq:u1_Fcs}
+\end{equation}
+
+\begin{equation}
+  u_{1,e}^{k} \approx \frac{u_{1,(m,n)}^{k} + u_{1,(m+1,n)}^{k}}{2}
+  \label{eq:u1_u1e}
+\end{equation}
+
+\begin{equation}
+  u_{1,w}^{k} \approx \frac{u_{1,(m-1,n)}^{k} + u_{1,(m,n)}^{k}}{2}
+  \label{eq:u1_u1w}
+\end{equation}
+
+\begin{equation}
+  u_{1,n}^{k} \approx \frac{u_{1,(m,n)}^{k} + u_{1,(m,n+1)}^{k}}{2}
+  \label{eq:u1_u1n}
+\end{equation}
+
+\begin{equation}
+  u_{1,s}^{k} \approx \frac{u_{1,(m,n-1)}^{k} + u_{1,(m,n)}^{k}}{2}
+  \label{eq:u1_u1s}
+\end{equation}
+
+\begin{equation}
+  u_{2,n}^{k} \approx \frac{u_{2,(m,n)}^{k} + u_{2,(m+1,n)}^{k}}{2}
+  \label{eq:u1_u2n}
+\end{equation}
+
+\begin{equation}
+  u_{2,s}^{k} \approx \frac{u_{2,(m,n-1)}^{k} + u_{2,(m+1,n-1)}^{k}}{2}
+  \label{eq:u1_u2s}
+\end{equation}
+
+The second term on the right hand side of the $u_{1}$ predictor equation represents the diffusive flux of velocity at the boundaries of the two-dimensional cell, and is evaluated on the $\sigma_{e}$ (East), $\sigma_{w}$ (West), $\sigma_{n}$ (North), and $\sigma_{s}$ (South) cell interfaces (walls), as shown in Eq. \ref{eq:u1_Fd_int}. As with the convective flux terms, the values of the velocity derivatives at the centers of the cell walls are assumed to be the average values of the velocity derivatives evaluated over the entire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Diffusive flux terms, such as $F_{d,e}^{k}$ are defined and these surface integrals are evaluated as shown in Eqs. \ref{eq:u1_Fde} - \ref{eq:u1_Fds}. The velocity derivatives at the cell face centers are approximated using 2nd-order accurate central differencing schemes \cite{Ferziger_Springer_2002}, shown in Eqs. \ref{eq:u1_du1dx1_e}-\ref{eq:u1_du1dx2_s}.
+
+\begin{multline}
+  \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{1}^{k}}}{\partial{x_{j}}}n_{j}d\sigma =
+  \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{1}^{k}}}{\partial{x_{1}}}n_{1}d\sigma + \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{1}^{k}}}{\partial{x_{2}}}n_{2}d\sigma = \\
+  \frac{1}{\text{Re}}\int_{\sigma_{e}}\frac{\partial{u_{1}^{k}}}{\partial{x_{1}}}d\sigma - \frac{1}{\text{Re}}\int_{\sigma_{w}}\frac{\partial{u_{1}^{k}}}{\partial{x_{1}}}d\sigma + \frac{1}{\text{Re}}\int_{\sigma_{n}}\frac{\partial{u_{1}^{k}}}{\partial{x_{2}}}d\sigma - \frac{1}{\text{Re}}\int_{\sigma_{s}}\frac{\partial{u_{1}^{k}}}{\partial{x_{2}}}d\sigma
+  \label{eq:u1_Fd_int}
+\end{multline}
+
+\begin{equation}
+  \frac{1}{\text{Re}}\int_{\sigma_{e}}\frac{\partial{u_{1}^{k}}}{\partial{x_{1}}}d\sigma \equiv
+  F_{d,e}^{k} \approx \frac{1}{\text{Re}}\frac{\partial{u_{1}}}{\partial{x_{1}}}\bigg|_{e}^{k}\Delta{x_{2}}
+  \label{eq:u1_Fde}
+\end{equation}
+
+\begin{equation}
+  - \frac{1}{\text{Re}}\int_{\sigma_{w}}\frac{\partial{u_{1}^{k}}}{\partial{x_{1}}}d\sigma \equiv
+  F_{d,w}^{k} \approx - \frac{1}{\text{Re}}\frac{\partial{u_{1}}}{\partial{x_{1}}}\bigg|_{w}^{k}\Delta{x_{2}}
+  \label{eq:u1_Fdw}
+\end{equation}
+
+\begin{equation}
+  \frac{1}{\text{Re}}\int_{\sigma_{n}}\frac{\partial{u_{1}^{k}}}{\partial{x_{2}}}d\sigma \equiv
+  F_{d,n}^{k} \approx \frac{1}{\text{Re}}\frac{\partial{u_{1}}}{\partial{x_{2}}}\bigg|_{n}^{k}\Delta{x_{1}}
+  \label{eq:u1_Fdn}
+\end{equation}
+
+\begin{equation}
+  - \frac{1}{\text{Re}}\int_{\sigma_{s}}\frac{\partial{u_{1}^{k}}}{\partial{x_{2}}}d\sigma \equiv
+  F_{d,s}^{k} \approx - \frac{1}{\text{Re}}\frac{\partial{u_{1}}}{\partial{x_{2}}}\bigg|_{s}^{k}\Delta{x_{1}}
+  \label{eq:u1_Fds}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{1}}}{\partial{x_{1}}}\bigg|_{e}^{k}\approx
+  \frac{u_{1,(m+1,n)}^{k} - u_{1,(m,n)}^{k}}{\Delta{x_{1}}}
+  \label{eq:u1_du1dx1_e}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{1}}}{\partial{x_{1}}}\bigg|_{w}^{k}\approx
+  \frac{u_{1,(m,n)}^{k} - u_{1,(m-1,n)}^{k}}{\Delta{x_{1}}}
+  \label{eq:u1_du1dx1_w}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{1}}}{\partial{x_{2}}}\bigg|_{n}^{k}\approx
+  \frac{u_{1,(m,n+1)}^{k} - u_{1,(m,n)}^{k}}{\Delta{x_{2}}}
+  \label{eq:u1_du1dx2_n}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{1}}}{\partial{x_{2}}}\bigg|_{s}^{k}\approx
+  \frac{u_{1,(m,n)}^{k} - u_{1,(m,n-1)}^{k}}{\Delta{x_{2}}}
+  \label{eq:u1_du1dx2_s}
+\end{equation}
+
+The $u_{1}$ predictor equation can now be re-written as shown in Eq. \ref{eq:u1_pred_final}.
+
+\begin{equation}
+  \boxed{
+    A_{u}[u_{1,(m,n)}^{*} - u_{1,(m,n)}^{k}] = - [F_{c,e}^{k} + F_{c,w}^{k} + F_{c,n}^{k} + F_{c,s}^{k}] + [F_{d,e}^{k} + F_{d,w}^{k} + F_{d,n}^{k} + F_{d,s}^{k}]
+  }
+  \label{eq:u1_pred_final}
+\end{equation}
+
+The unsteady term in the $u_{1}$ corrector equation is approximated identical to the unsteady term in the $u_{1}$ predictor equations, shown in Eq. \ref{eq:u1_mom_us}. The only term on the right hand side of the $u_{1}$ corrector equation is the pressure flux term. Because a staggered grid is used in this problem, the pressure nodes exist at the center of the East and West cell wall faces. The pressure at the center of the cell walls is assumed to be the average pressure evaluated over the wntire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Accordingly, the pressure flux is approximated and discretized as shown in Eqs. \ref{eq:u1_Fp_int} - \ref{eq:u1_Fpw}.
+
+\begin{equation}
+  \int_{\sigma}pn_{1}d\sigma = \int_{\sigma_{e}}pd\sigma - \int_{\sigma_{w}}pd\sigma
+  \label{eq:u1_Fp_int}
+\end{equation}
+
+\begin{equation}
+  \int_{\sigma_{e}}pd\sigma \equiv F_{p,e}^{k} \approx p_{e}\Delta{x_{2}} = p_{(m+1,n)}\Delta{x_{2}}
+  \label{eq:u1_Fpe}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{w}}pd\sigma \equiv F_{p,w}^{k} \approx - p_{w}\Delta{x_{2}} = - p_{(m,n)}\Delta{x_{2}}
+  \label{eq:u1_Fpw}
+\end{equation}
+
+The $u_{1}$ corrector momentum equation can now be re-written as shown in Eq. \ref{eq:u1_corr_final}.
+
+\begin{equation}
+  \boxed{
+  A_{u}[u_{1,(m,n)}^{k+1}-u_{1,(m,n)}^{*}] = - [F_{p,n}^{k} + F_{p,s}^{k}]
+  }
+  \label{eq:u1_corr_final}
+\end{equation}
+
+
+\subsubsection{$u_{2}$ Momentum Equation}
+
+The predictor and corrector $u_{2}$ momentum equations, which are obtained by substituting $i = 2$ in the predictor and corrector momentum equations, Eqs. \ref{eq:int_mom_pred}, \ref {eq:int_mom_corr},  are approximated and discretized in a nearly identical way to those of $u_{1}$. The procedure for discritizing and approximating the terms in these equations is described in the same level of detail to provide clarity.
+
+The unsteady term in the $u_{2}$ predictor momentum equation is evaluated by assuming that the value of $u_{2}$ at the center of the two-dimensional $u_{2}$ cell is the average value of $u_{2}$ evaluated over the volume of the cell, as shown in Eq. \ref{eq:u2_mom_us}, which is 2nd-order accurate \cite{Ferziger_Springer_2002}.
+
+\begin{equation}
+  \text{St}\int_{\Omega}\frac{u_{2}^{*}-u_{2}^{k}}{\Delta{t}}d\Omega \approx
+  \text{St}\bigg[\frac{u_{2,(m,n)}^{*}-u_{2,(m,n)}^{k}}{\Delta{t}}\bigg]\Delta{x_{1}}\Delta{x_{2}} \equiv
+  A_{u}[u_{2,(m,n)}^{*} - u_{2,(m,n)}^{k}]
+  \label{eq:u2_mom_us}  
+\end{equation}
+
+The first term on the right hand side of the $u_{2}$ predictor equation represents the convective flux of velocity at the boundaries of the 2D cell, and is evaluated on the $\sigma_{e}$ (East), $\sigma_{w}$ (West), $\sigma_{n}$ (North), and $\sigma_{s}$ (South) surface boundaries (walls) of the cell, as shown in Eq. \ref{eq:u2_Fc_int}. These surface integrals are approximated by assuming that the velocities at the centers of the cell walls are the average values of the velocities evaluated over the entire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Convective flux terms, such as $F_{c,e}^{k}$, are defined, and the convective flux surface integrals are evaluated as shown in Eqs. \ref{eq:u2_Fce} - \ref{eq:u2_Fcs}. In the two-dimensional $u_{2}$ cells, the velocites are not defined at the centers of the cell faces and thus are obtained by linear interpolation, which has 2nd-order spatial accuracy \cite{Ferziger_Springer_2002}, shown in Eqs. \ref{eq:u2_u2e} - \ref{eq:u2_u2s}. 
+
+\begin{multline}
+  \int_{\sigma}u_{j}^{k}u_{2}^{k}n_{j}d\sigma = 
+  \int_{\sigma}u_{1}^{k}u_{2}^{k}n_{1}d\sigma + \int_{\sigma}u_{2}^{k}u_{2}^{k}n_{2}d\sigma = \\
+  \int_{\sigma_{e}}u_{1}^{k}u_{2}^{k}d\sigma - \int_{\sigma_{w}}u_{1}^{k}u_{2}^{k}d\sigma + \int_{\sigma_{n}}u_{2}^{k}u_{2}^{k}d\sigma - \int_{\sigma_{s}}u_{2}^{k}u_{2}^{k}d\sigma
+  \label{eq:u2_Fc_int}
+\end{multline}
+
+\begin{equation}
+  \int_{\sigma_{e}}u_{1}^{k}u_{2}^{k}n_{1}d\sigma \equiv
+  F_{c,e}^{k} \approx u_{1,e}^{k}u_{2,e}^{k}\Delta{x_{2}}
+  \label{eq:u2_Fce}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{w}}u_{1}^{k}u_{2}^{k}d\sigma \equiv
+  F_{c,w}^{k} \approx -u_{1,w}^{k}u_{2,w}^{k}\Delta{x_{2}}
+  \label{eq:u2_Fcw}
+\end{equation}
+
+\begin{equation}
+  \int_{\sigma_{n}}u_{2}^{k}u_{2}^{k}d\sigma \equiv
+  F_{c,n}^{k} \approx u_{2,n}^{k}u_{2,n}^{k}\Delta{x_{1}}
+  \label{eq:u2_Fcn}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{s}}u_{2}^{k}u_{2}^{k}d\sigma \equiv
+  F_{c,s}^{k} \approx -u_{2,s}^{k}u_{2,s}^{k}\Delta{x_{1}}
+  \label{eq:u2_Fcs}
+\end{equation}
+
+\begin{equation}
+  u_{2,e}^{k} \approx \frac{u_{2,(m,n)}^{k} + u_{2,(m+1,n)}^{k}}{2}
+  \label{eq:u2_u2e}
+\end{equation}
+
+\begin{equation}
+  u_{2,w}^{k} \approx \frac{u_{2,(m-1,n)}^{k} + u_{2,(m,n)}^{k}}{2}
+  \label{eq:u2_u2w}
+\end{equation}
+
+\begin{equation}
+  u_{1,e}^{k} \approx \frac{u_{1,(m,n)}^{k} + u_{1,(m,n+1)}^{k}}{2}
+  \label{eq:u2_u1e}
+\end{equation}
+
+\begin{equation}
+  u_{1,w}^{k} \approx \frac{u_{1,(m-1,n-1)}^{k} + u_{1,(m-1,n)}^{k}}{2}
+  \label{eq:u2_u1w}
+\end{equation}
+
+\begin{equation}
+  u_{2,n}^{k} \approx \frac{u_{2,(m,n)}^{k} + u_{2,(m,n+1)}^{k}}{2}
+  \label{eq:u2_u2n}
+\end{equation}
+
+\begin{equation}
+  u_{2,s}^{k} \approx \frac{u_{2,(m,n-1)}^{k} + u_{2,(m,n)}^{k}}{2}
+  \label{eq:u2_u2s}
+\end{equation}
+
+The second term on the right hand side of the $u_{2}$ predictor equation represents the diffusive flux of velocity at the boundaries of the 2D cell, and is evaluated on the $\sigma_{e}$ (East), $\sigma_{w}$ (West), $\sigma_{n}$ (North), and $\sigma_{s}$ (South) cell interfaces (walls), as shown in Eq. \ref{eq:u2_Fd_int}. As with the convective flux terms, the values of the velocity derivatives at the centers of the cell walls are assumed to be the average values of the velocity derivatives evaluated over the entire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Diffusive flux terms, such as $F_{d,e}^{k}$ are defined, and these surface integrals are evaluated as shown in Eqs. \ref{eq:u2_Fde} - \ref{eq:u2_Fds}. The velocity derivatives at the cell face centers are approximated using 2nd-order accurate central differencing schemes \cite{Ferziger_Springer_2002}, shown in Eqs. \ref{eq:u2_du2dx1_e} - \ref{eq:u2_du2dx2_s}.
+
+\begin{multline}
+  \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{2}^{k}}}{\partial{x_{j}}}n_{j}d\sigma =
+  \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{2}^{k}}}{\partial{x_{1}}}n_{1}d\sigma + \frac{1}{\text{Re}}\int_{\sigma}\frac{\partial{u_{2}^{k}}}{\partial{x_{2}}}n_{2}d\sigma = \\
+  \frac{1}{\text{Re}}\int_{\sigma_{e}}\frac{\partial{u_{2}^{k}}}{\partial{x_{1}}}d\sigma - \frac{1}{\text{Re}}\int_{\sigma_{w}}\frac{\partial{u_{2}^{k}}}{\partial{x_{1}}}d\sigma + \frac{1}{\text{Re}}\int_{\sigma_{n}}\frac{\partial{u_{2}^{k}}}{\partial{x_{2}}}d\sigma - \frac{1}{\text{Re}}\int_{\sigma_{s}}\frac{\partial{u_{2}^{k}}}{\partial{x_{2}}}d\sigma
+  \label{eq:u2_Fd_int}
+\end{multline}
+
+\begin{equation}
+  \frac{1}{\text{Re}}\int_{\sigma_{e}}\frac{\partial{u_{2}^{k}}}{\partial{x_{1}}}d\sigma \equiv
+  F_{d,e}^{k} \approx \frac{1}{\text{Re}}\frac{\partial{u_{2}}}{\partial{x_{1}}}\bigg|_{e}^{k}\Delta{x_{2}}
+  \label{eq:u2_Fde}
+\end{equation}
+
+\begin{equation}
+  - \frac{1}{\text{Re}}\int_{\sigma_{w}}\frac{\partial{u_{2}^{k}}}{\partial{x_{1}}}d\sigma \equiv
+  F_{d,w}^{k} \approx - \frac{1}{\text{Re}}\frac{\partial{u_{2}}}{\partial{x_{1}}}\bigg|_{w}^{k}\Delta{x_{2}}
+  \label{eq:u2_Fdw}
+\end{equation}
+
+\begin{equation}
+  \frac{1}{\text{Re}}\int_{\sigma_{n}}\frac{\partial{u_{2}^{k}}}{\partial{x_{2}}}d\sigma \equiv
+  F_{d,n}^{k} \approx \frac{1}{\text{Re}}\frac{\partial{u_{2}}}{\partial{x_{2}}}\bigg|_{n}^{k}\Delta{x_{1}}
+  \label{eq:u2_Fdn}
+\end{equation}
+
+\begin{equation}
+  - \frac{1}{\text{Re}}\int_{\sigma_{s}}\frac{\partial{u_{2}^{k}}}{\partial{x_{2}}}d\sigma \equiv
+  F_{d,s}^{k} \approx - \frac{1}{\text{Re}}\frac{\partial{u_{2}}}{\partial{x_{2}}}\bigg|_{s}^{k}\Delta{x_{1}}
+  \label{eq:u2_Fds}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{2}}}{\partial{x_{1}}}\bigg|_{e}^{k}\approx
+  \frac{u_{2,(m+1,n)}^{k} - u_{2,(m,n)}^{k}}{\Delta{x_{1}}}
+  \label{eq:u2_du2dx1_e}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{2}}}{\partial{x_{1}}}\bigg|_{w}^{k}\approx
+  \frac{u_{2,(m,n)}^{k} - u_{2,(m-1,n)}^{k}}{\Delta{x_{1}}}
+  \label{eq:u2_du2dx1_w}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{2}}}{\partial{x_{2}}}\bigg|_{n}^{k}\approx
+  \frac{u_{2,(m,n+1)}^{k} - u_{2,(m,n)}^{k}}{\Delta{x_{2}}}
+  \label{eq:u2_du2dx2_n}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial{u_{2}}}{\partial{x_{2}}}\bigg|_{s}^{k}\approx
+  \frac{u_{2,(m,n)}^{k} - u_{2,(m,n-1)}^{k}}{\Delta{x_{2}}}
+  \label{eq:u2_du2dx2_s}
+\end{equation}
+
+The $u_{2}$ predictor equation can now be re-written as shown in Eq. \ref{eq:u2_pred_final}.
+
+\begin{equation}
+  \boxed{
+    A_{u}[u_{2,(m,n)}^{*} - u_{2,(m,n)}^{k}] = - [F_{c,e}^{k} + F_{c,w}^{k} + F_{c,n}^{k} + F_{c,s}^{k}] + [F_{d,e}^{k} + F_{d,w}^{k} + F_{d,n}^{k} + F_{d,s}^{k}]
+  }
+  \label{eq:u2_pred_final}
+\end{equation}
+
+
+The unsteady term in the $u_{2}$ corrector equation is approximated identical to the unsteady term in the $u_{2}$ predictor equation, shown in Eq. \ref{eq:u2_mom_us}. The only term on the right hand side of the $u_{2}$ corrector equation is the pressure flux term. Because a staggered grid is used in this problem, the pressure nodes exist at the center of the North and South cell wall faces. The pressure at the center of the cell walls is assumed to be the average pressure evaluated over the entire surface, which is 2nd-order accurate \cite{Ferziger_Springer_2002}. Accordingly, the pressure flux is approximated and discretized as shown in Eqs. \ref{eq:u2_Fp_int} - \ref{eq:u2_Fps}.
+
+\begin{equation}
+  \int_{\sigma}pn_{2}d\sigma = \int_{\sigma_{n}}pd\sigma - \int_{\sigma_{s}}pd\sigma
+  \label{eq:u2_Fp_int}
+\end{equation}
+
+\begin{equation}
+  \int_{\sigma_{n}}pd\sigma \equiv F_{p,n}^{k} \approx p_{n}\Delta{x_{1}} = p_{(m,n+1)}\Delta{x_{1}}
+  \label{eq:u2_Fpn}
+\end{equation}
+
+\begin{equation}
+  - \int_{\sigma_{s}}pd\sigma \equiv F_{p,s}^{k} \approx - p_{s}\Delta{x_{1}} = - p_{(m,n)}\Delta{x_{1}}
+  \label{eq:u2_Fps}
+\end{equation}
+
+The $u_{2}$ corrector momentum equation can now be re-written as shown in Eq. \ref{eq:u2_corr_final}.
+
+\begin{equation}
+  \boxed{
+  A_{u}[u_{2,(m,n)}^{k+1}-u_{2,(m,n)}^{*}] = - [F_{p,n}^{k} + F_{p,s}^{k}]
+  }
+  \label{eq:u2_corr_final}
+\end{equation}
+
+\subsection{Boundary Conditions}
+
+The no-slip velocity boundary conditions, $u_{1} = 0$ (or $U$ at the top wall) and $u_{2}=0$, at the domain boundaries ($x_{1} = 0, L$ and $x_{2} = 0, L$) are enforced through ``ghost nodes'' placed just beyond the domain boundaries. The locations of these ghost nodes are tabulated in Table \ref{tab:ghost} for clarity. A negative velocity is applied at the ghost nodes such that the velocity at the domain boundaries is exactly $0$ (or $U$ at the top wall). This is demonstrated in Eqs. \ref{eq:BC_u1_bot} - \ref{eq:BC_u2_right}. Note that the equation for the velocity applied to the ghost nodes above the top boundary, Eq. \ref{eq:BC_u1_top}, accounts for the non-zero velocity of the lid, $U$. The normal component of velocity is simply set to 0 at the boundaries. These boundary conditions are applied at the beginning of each time step before the predictor, pressure Poisson, and corrector equation procedures are applied.
+
+\begin{table}
+  \begin{center}
+    \caption{Coordinate locations of ghost nodes.}
+    \begin{tabular}{| l | c | c | c | c | }
+      \hline
+      Wall & $x_{1}$ & $x_{2}$ & $n$ & $m$ \\ \hline
+      Left & $-\frac{\Delta{x}}{2}$ & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $0$ & $\in [0, N+1]$ \\
+      Right & $L + \frac{\Delta{x}}{2}$ & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $N+1$ & $\in [0, N+1]$ \\
+      Bottom & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $-\frac{\Delta{x}}{2}$ & $\in [0, N+1]$ & $0$ \\
+      Top & $ \in [-\frac{\Delta{x}}{2}, L + \frac{\Delta{x}}{2}]$ & $L + \frac{\Delta{x}}{2}$ & $\in [0, N+1]$ & $N+1$ \\ \hline
+    \end{tabular}
+  \end{center}
+  \label{tab:ghost}
+\end{table}
+
+\begin{equation}
+  u_{1,(m = 0,n)} = -u_{1,(m = 1, n)}
+  \label{eq:BC_u1_bot}
+\end{equation}
+
+\begin{equation}
+  u_{1,(m = N+1,n)} = 2U-u_{1,(m = N, n)}
+  \label{eq:BC_u1_top}
+\end{equation}
+
+\begin{equation}
+  u_{2,(m,n=0)} = -u_{2,(m, n=1)}
+  \label{eq:BC_u2_left}
+\end{equation}
+
+\begin{equation}
+  u_{2,(m,n=N+1)} = -u_{2,(m, n=N)}
+  \label{eq:BC_u2_right}
+\end{equation}
+
+
+\subsection{Pressure Poisson Equation}
+
+\subsection{Temporal Discretization}
+
+\section{Solution Procedure}
+
+\section{Results}
 
 \printbibliography{}
 
