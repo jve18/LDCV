@@ -688,7 +688,7 @@ The pressure equation given in Eq. \ref{eq:diff_press_poiss} is re-arranged to m
   \label{eq:Poisson_mat}
 \end{equation}
 
-The Poisson problem cast into matrix form, Eq. \ref{eq:Poisson_mat}, is a linear system of the form $Ax = b$ and can be solved as such.
+The Poisson problem cast into matrix form, Eq. \ref{eq:Poisson_mat}, is a linear system of the form $Ax = b$ and can be solved as such. One such method which utilizes the eigenvalues and eigenvectors of the Laplacian operator matrices, as described in Ref. \cite{
 
 \subsection{Temporal Discretization}
 

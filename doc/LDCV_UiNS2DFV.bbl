@@ -53,6 +53,27 @@
       \endverb
       \keyw{book}
     \endentry
+    \entry{Zhang_MA615_2020}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=2f878bbd283e10344f50fd17a7a639ee}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Xiangxiong},
+           giveni={X\bibinitperiod}}}%
+      }
+      \strng{namehash}{2f878bbd283e10344f50fd17a7a639ee}
+      \strng{fullhash}{2f878bbd283e10344f50fd17a7a639ee}
+      \strng{bibnamehash}{2f878bbd283e10344f50fd17a7a639ee}
+      \strng{authorbibnamehash}{2f878bbd283e10344f50fd17a7a639ee}
+      \strng{authornamehash}{2f878bbd283e10344f50fd17a7a639ee}
+      \strng{authorfullhash}{2f878bbd283e10344f50fd17a7a639ee}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{MA615 Numerical Methods for PDEs Spring 2020 Lecture Notes}
+      \field{year}{2020}
+    \endentry
   \enddatalist
 \endrefsection
 \endinput
